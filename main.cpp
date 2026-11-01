@@ -7,6 +7,7 @@
 #include <cctype>
 
 const int MAX_GUESSES = 6;
+const std::string TEXT_FILE_NAME = "words_alpha.txt";
 
 bool icompare(const std::string& str1, const std::string& str2) {
     if (str1.length() != str2.length()) {
@@ -19,8 +20,27 @@ bool icompare(const std::string& str1, const std::string& str2) {
     });
 }
 
-std::string getRandomWord(std::vector<std::string> words)
-{
+std::vector<std::string> loadWords(std::string fileName) {
+    std::ifstream words_file(fileName);
+
+    std::vector<std::string> words;
+
+    if (!words_file.is_open()) {
+        std::cerr << "Couldn't open file!" << std::endl;
+        return words;
+    }
+
+    std::string word;
+    while (words_file >> word) {
+        if (word.length() == 5) {
+            words.push_back(word);
+        }
+    }
+
+    return words;
+}
+
+std::string getRandomWord(const std::vector<std::string>& words) {
     std::random_device rd;
     std::mt19937 gen(rd());
 
@@ -31,39 +51,14 @@ std::string getRandomWord(std::vector<std::string> words)
     return words[random_index];
 }
 
-int main()
-{
-    std::ifstream words_file("words.txt");
-
-    if (!words_file.is_open()) {
-        std::cerr << "Couldn't open file!" << std::endl;
-        return 1;
-    }
-
-    std::vector<std::string> words;
-
-    std::string word;
-    while (words_file >> word) {
-        if (word.length() == 5) {
-            words.push_back(word);
-        }
-    }
-
-    if (words.size() <= 0) {
-        std::cerr << "Couldn't load any words! Please make sure each word is 5 letters long." << std::endl;
-        return 1;
-    }
-
-    std::cout << "Succesfully loaded " << words.size() << " words!" << std::endl << std::endl;
-
-    std::string random_word = getRandomWord(words);
+bool playGame(std::string random_word) {
     std::string user_guess;
     int guesses_count = 0;
-    bool game_won = false;
 
+    // For testing/debugging; prints the random word
     std::cout << random_word << std::endl;
 
-    while (guesses_count < MAX_GUESSES && !game_won)
+    while (guesses_count < MAX_GUESSES)
     {
         std::cout << "Enter in a 5 letter guess: ";
         std::cin >> user_guess;
@@ -74,10 +69,12 @@ int main()
             continue;
         }
 
+        // Pass words as a parameter to see if user_guess is inside of words
+
         guesses_count++;
 
         if (icompare(user_guess, random_word)) {
-            game_won = true;
+            return true;
             break;
         }
         
@@ -85,6 +82,22 @@ int main()
             std::cout << std::endl << "Max guesses reached!" << std::endl;
         }
     }
+
+    return false;
+}
+
+int main()
+{   
+    std::vector<std::string> words = loadWords(TEXT_FILE_NAME);
+
+    if (words.size() <= 0) {
+        std::cerr << "No 5 letter words found in \"" << TEXT_FILE_NAME << "\"" << std::endl;
+        return 1;
+    }
+
+    std::string random_word = getRandomWord(words);
+    
+    bool game_won = playGame(random_word);
 
     if (game_won) {
         std::cout << std::endl << "Game won!! You successfully guessed the word!" << std::endl;
