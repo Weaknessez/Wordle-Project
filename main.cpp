@@ -51,7 +51,7 @@ std::string getRandomWord(const std::vector<std::string>& words) {
     return words[random_index];
 }
 
-bool playGame(std::string random_word) {
+bool playGame(const std::vector<std::string>& words, const std::string& random_word) {
     std::string user_guess;
     int guesses_count = 0;
 
@@ -69,13 +69,20 @@ bool playGame(std::string random_word) {
             continue;
         }
 
-        // Pass words as a parameter to see if user_guess is inside of words
+        auto it = std::find_if(words.begin(), words.end(), [&](const std::string& word) {
+            return icompare(word, user_guess);
+        });
+
+        if (it == words.end())
+        {
+            std::cout << std::endl << "Guess is not in \"" << TEXT_FILE_NAME << "\". Please try again" << std::endl;
+            continue;
+        }
 
         guesses_count++;
 
         if (icompare(user_guess, random_word)) {
             return true;
-            break;
         }
         
         if (guesses_count >= MAX_GUESSES) {
@@ -97,7 +104,7 @@ int main()
 
     std::string random_word = getRandomWord(words);
     
-    bool game_won = playGame(random_word);
+    bool game_won = playGame(words, random_word);
 
     if (game_won) {
         std::cout << std::endl << "Game won!! You successfully guessed the word!" << std::endl;
