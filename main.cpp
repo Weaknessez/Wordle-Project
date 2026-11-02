@@ -12,10 +12,22 @@ const int LETTER_COUNT = 5;
 const std::string TEXT_FILE_NAME = "words_alpha.txt";
 
 // ANSI Color codes
-//const std::string RESET = "\033[0m";
+const std::string RESET = "\033[0m";
 const std::string BLACK = "\033[40m";
 const std::string YELLOW = "\033[43m";
 const std::string GREEN = "\033[42m";
+
+
+enum class LetterResult {
+    Correct,
+    Present,
+    Absent
+};
+
+struct GuessRecord {
+    std::string word;
+    std::vector<LetterResult> results;
+};
 
 bool icompare(const std::string& str1, const std::string& str2) {
     if (str1.length() != str2.length()) {
@@ -30,6 +42,33 @@ bool icompare(const std::string& str1, const std::string& str2) {
 
 void printColoredLetter(const char& letter, const std::string& ANSIColorCode) {
     std::cout << ANSIColorCode << static_cast<char>(std::toupper(letter)) << "\033[0m";
+}
+
+void printColoredWord(const std::vector<LetterResult>& letter_results, const std::string& user_guess, const u_int& newLineMargins = 2) {
+    for (size_t i = 0; i < newLineMargins; i++) { std::cout << std::endl; }
+
+    for (size_t i = 0; i < LETTER_COUNT; i++) {
+        if (letter_results[i] == LetterResult::Correct) {
+            printColoredLetter(user_guess[i], GREEN);
+        } else if (letter_results[i] == LetterResult::Present) {
+            printColoredLetter(user_guess[i], YELLOW);
+        } else {
+            printColoredLetter(user_guess[i], BLACK);
+        }
+    }
+
+    for (size_t i = 0; i < newLineMargins; i++) { std::cout << std::endl; }
+}
+
+void printAllGuessRecords(const std::vector<GuessRecord>& guess_history, const u_int& newLineMargins = 2) {
+    for (size_t i = 0; i < newLineMargins; i++) { std::cout << std::endl; }
+
+    for (const GuessRecord& record : guess_history) {
+        printColoredWord(record.results, record.word, 0);
+        std::cout << std::endl;
+    }
+
+    for (size_t i = 0; i < newLineMargins; i++) { std::cout << std::endl; }
 }
 
 std::vector<std::string> loadWords(std::string fileName) {
@@ -75,15 +114,49 @@ std::string lowerString(const std::string& text)
     return word_lower;
 }
 
-bool playGame(const std::vector<std::string>& words, const std::string& random_word) {
-    std::string user_guess;
-    std::vector<std::string> colors(LETTER_COUNT, BLACK);
+std::vector<LetterResult> evaluateGuess(const std::string& user_guess, const std::string& word) {
+    std::string word_lower = lowerString(word);
+    std::string user_guess_lower = lowerString(user_guess);
+
+    std::vector<LetterResult> colors(LETTER_COUNT, LetterResult::Absent);
     std::vector<bool> used(LETTER_COUNT, false);
+
+    // First pass; gets every Correct match with each index
+    for (size_t i = 0; i < LETTER_COUNT; i++) {
+        colors[i] = LetterResult::Absent;
+        used[i] = false;
+
+        if (word_lower[i] == user_guess_lower[i]) {
+            colors[i] = LetterResult::Correct;
+            used[i] = true;
+        }
+    }
+
+    // Second pass; gets the Present letters in the word
+    for (size_t i = 0; i < LETTER_COUNT; i++) {
+        if (colors[i] == LetterResult::Correct) { continue; }
+
+        for (size_t x = 0; x < LETTER_COUNT; x++) {
+            if (user_guess_lower[i] == word_lower[x] && !used[x]) {
+                colors[i] = LetterResult::Present;
+                used[x] = true;
+                break;
+            }
+        }
+    }
+
+    return colors;
+}
+
+bool playGame(const std::vector<std::string>& words, const std::string& random_word) {
+    std::vector<GuessRecord> game_history;
+    std::string user_guess;
     int guesses_count = 0;
 
     // For testing/debugging; prints the random word
     std::cout << random_word << std::endl;
-    std::cout << "\n\033[1mWordle by Yoosuuuff\e[0m\n\n";
+
+    std::cout << "\n\033[1mWordle by Yusuf; Made using C++\e[0m\n\n";
 
     while (guesses_count < MAX_GUESSES)
     {
@@ -93,7 +166,7 @@ bool playGame(const std::vector<std::string>& words, const std::string& random_w
         std::cin >> user_guess;
 
         if (user_guess.length() != LETTER_COUNT) {
-            std::cout << std::endl << "Guess not 5 letters long! Please try again" << std::endl;
+            std::cout << "\n\033[31mGuess is not " << LETTER_COUNT << " letters long! Please try again\033[0m\n\n";
             continue;
         }
 
@@ -103,43 +176,13 @@ bool playGame(const std::vector<std::string>& words, const std::string& random_w
 
         if (it == words.end())
         {
-            std::cout << std::endl << "Guess is not in \"" << TEXT_FILE_NAME << "\". Please try again" << std::endl;
+            std::cout << "\n\033[31mGuess is not in \033[33m\"" << TEXT_FILE_NAME << "\"\033[31m.\033[0m\n\n";
             continue;
         }
 
-        std::string random_word_lower = lowerString(random_word);
-        std::string user_guess_lower = lowerString(user_guess);
-
-        for (size_t i = 0; i < LETTER_COUNT; i++) {
-            // apple and ppppp
-            colors[i] = BLACK;
-            used[i] = false;
-
-            if (random_word_lower[i] == user_guess_lower[i]) {
-                colors[i] = GREEN;
-                used[i] = true;
-            }
-        }
-
-        for (size_t i = 0; i < LETTER_COUNT; i++) {
-            if (colors[i] == GREEN) { continue; }
-
-            for (size_t x = 0; x < LETTER_COUNT; x++) {
-                if (user_guess_lower[i] == random_word_lower[x] && !used[x]) {
-                    colors[i] = YELLOW;
-                    used[x] = true;
-                    break;
-                }
-            }
-        }
-
-        std::cout << '\n';
-
-        std::cout << "\n\nCurrent word: ";
-        for (size_t i = 0; i < user_guess.length(); i++) {
-            printColoredLetter(user_guess[i], colors[i]);
-        }
-        std::cout << "\n\n";
+        std::vector<LetterResult> letter_results = evaluateGuess(user_guess, random_word);
+        game_history.push_back({user_guess, letter_results});
+        printAllGuessRecords(game_history);
 
         guesses_count++;
 
@@ -160,7 +203,7 @@ int main()
     std::vector<std::string> words = loadWords(TEXT_FILE_NAME);
 
     if (words.size() <= 0) {
-        std::cerr << "No 5 letter words found in \"" << TEXT_FILE_NAME << "\"" << std::endl;
+        std::cerr << "No \033[31m" << LETTER_COUNT << " letter words found in \033[33m\"" << TEXT_FILE_NAME << "\"\033[0m" << std::endl;
         return 1;
     }
 
