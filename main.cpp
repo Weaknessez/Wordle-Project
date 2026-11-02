@@ -8,10 +8,11 @@
 
 // Constants
 const int MAX_GUESSES = 6;
+const int LETTER_COUNT = 5;
 const std::string TEXT_FILE_NAME = "words_alpha.txt";
 
 // ANSI Color codes
-//const std::string RESET = "\e[0m";
+//const std::string RESET = "\033[0m";
 const std::string BLACK = "\033[40m";
 const std::string YELLOW = "\033[43m";
 const std::string GREEN = "\033[42m";
@@ -27,8 +28,8 @@ bool icompare(const std::string& str1, const std::string& str2) {
     });
 }
 
-std::string printColoredLetter(const char& letter, const std::string& ANSIColorCode) {
-    return ANSIColorCode + letter + "\e[0m";
+void printColoredLetter(const char& letter, const std::string& ANSIColorCode) {
+    std::cout << ANSIColorCode << static_cast<char>(std::toupper(letter)) << "\033[0m";
 }
 
 std::vector<std::string> loadWords(std::string fileName) {
@@ -43,7 +44,7 @@ std::vector<std::string> loadWords(std::string fileName) {
 
     std::string word;
     while (words_file >> word) {
-        if (word.length() == 5) {
+        if (word.length() == LETTER_COUNT) {
             words.push_back(word);
         }
     }
@@ -62,21 +63,36 @@ std::string getRandomWord(const std::vector<std::string>& words) {
     return words[random_index];
 }
 
+std::string lowerString(const std::string& text)
+{
+    std::string word_lower;
+    word_lower.reserve(text.size());
+
+    std::transform(text.begin(), text.end(), std::back_inserter(word_lower), [](unsigned char c) {
+        return std::tolower(c);
+    });
+
+    return word_lower;
+}
+
 bool playGame(const std::vector<std::string>& words, const std::string& random_word) {
     std::string user_guess;
+    std::vector<std::string> colors(LETTER_COUNT, BLACK);
+    std::vector<bool> used(LETTER_COUNT, false);
     int guesses_count = 0;
 
     // For testing/debugging; prints the random word
     std::cout << random_word << std::endl;
+    std::cout << "\n\033[1mWordle by Yoosuuuff\e[0m\n\n";
 
     while (guesses_count < MAX_GUESSES)
     {
-        std::cout << "\n\033[1mWordle\e[0m\n\nGuesses: " << guesses_count << "/" << MAX_GUESSES << std::endl << std::endl;
+        std::cout << "Guesses: " << guesses_count << "/" << MAX_GUESSES << "\n\n";
 
         std::cout << "Enter in a 5 letter guess: ";
         std::cin >> user_guess;
 
-        if (user_guess.length() != 5) {
+        if (user_guess.length() != LETTER_COUNT) {
             std::cout << std::endl << "Guess not 5 letters long! Please try again" << std::endl;
             continue;
         }
@@ -91,15 +107,39 @@ bool playGame(const std::vector<std::string>& words, const std::string& random_w
             continue;
         }
 
-        for (size_t i = 0; i < random_word.length(); ++i)
-        {
-            char rChar = static_cast<char>(std::tolower(static_cast<unsigned char>(random_word[i])));
-            char uChar = static_cast<char>(std::tolower(static_cast<unsigned char>(user_guess[i])));
+        std::string random_word_lower = lowerString(random_word);
+        std::string user_guess_lower = lowerString(user_guess);
 
-            if (rChar == uChar) {
-                // TODO: I dont know lowkey, find a way to color them green or save this index at the random_word[i] to be green and output it before.
+        for (size_t i = 0; i < LETTER_COUNT; i++) {
+            // apple and ppppp
+            colors[i] = BLACK;
+            used[i] = false;
+
+            if (random_word_lower[i] == user_guess_lower[i]) {
+                colors[i] = GREEN;
+                used[i] = true;
             }
         }
+
+        for (size_t i = 0; i < LETTER_COUNT; i++) {
+            if (colors[i] == GREEN) { continue; }
+
+            for (size_t x = 0; x < LETTER_COUNT; x++) {
+                if (user_guess_lower[i] == random_word_lower[x] && !used[x]) {
+                    colors[i] = YELLOW;
+                    used[x] = true;
+                    break;
+                }
+            }
+        }
+
+        std::cout << '\n';
+
+        std::cout << "\n\nCurrent word: ";
+        for (size_t i = 0; i < user_guess.length(); i++) {
+            printColoredLetter(user_guess[i], colors[i]);
+        }
+        std::cout << "\n\n";
 
         guesses_count++;
 
