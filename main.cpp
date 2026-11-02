@@ -5,6 +5,7 @@
 #include <string>
 #include <algorithm>
 #include <cctype>
+#include <cassert>
 
 // Constants
 const int MAX_GUESSES = 6;
@@ -44,7 +45,7 @@ void printColoredLetter(const char& letter, const std::string& ANSIColorCode) {
     std::cout << ANSIColorCode << static_cast<char>(std::toupper(letter)) << "\033[0m";
 }
 
-void printColoredWord(const std::vector<LetterResult>& letter_results, const std::string& user_guess, const u_int& newLineMargins = 2) {
+void printColoredWord(const std::vector<LetterResult>& letter_results, const std::string& user_guess, const std::size_t& newLineMargins = 2) {
     for (size_t i = 0; i < newLineMargins; i++) { std::cout << std::endl; }
 
     for (size_t i = 0; i < LETTER_COUNT; i++) {
@@ -60,7 +61,7 @@ void printColoredWord(const std::vector<LetterResult>& letter_results, const std
     for (size_t i = 0; i < newLineMargins; i++) { std::cout << std::endl; }
 }
 
-void printAllGuessRecords(const std::vector<GuessRecord>& guess_history, const u_int& newLineMargins = 2) {
+void printAllGuessRecords(const std::vector<GuessRecord>& guess_history, const std::size_t& newLineMargins = 2) {
     for (size_t i = 0; i < newLineMargins; i++) { std::cout << std::endl; }
 
     for (const GuessRecord& record : guess_history) {
@@ -123,9 +124,6 @@ std::vector<LetterResult> evaluateGuess(const std::string& user_guess, const std
 
     // First pass; gets every Correct match with each index
     for (size_t i = 0; i < LETTER_COUNT; i++) {
-        colors[i] = LetterResult::Absent;
-        used[i] = false;
-
         if (word_lower[i] == user_guess_lower[i]) {
             colors[i] = LetterResult::Correct;
             used[i] = true;
@@ -148,6 +146,29 @@ std::vector<LetterResult> evaluateGuess(const std::string& user_guess, const std
     return colors;
 }
 
+void runTest(const std::string& guess, const std::string& word, const std::vector<LetterResult>& expected) {
+    std::vector<LetterResult> result = evaluateGuess(guess, word);
+
+    assert(result.size() == expected.size());
+
+    for (size_t i = 0; i < expected.size(); i++)
+    {
+        assert(result[i] == expected[i]);
+    }
+}
+
+void runAllTests() {
+    using LR = LetterResult;
+
+    runTest("PPPPP", "APPLE", { LR::Absent, LR::Correct, LR::Correct, LR::Absent, LR::Absent });
+    runTest("DIVES", "SQUAD", { LR::Present, LR::Absent, LR::Absent, LR::Absent, LR::Present });
+    runTest("PLATE", "PLANT", { LR::Correct, LR::Correct, LR::Correct, LR::Present, LR::Absent });
+    runTest("PEEPS", "SHEEP", { LR::Present, LR::Present, LR::Correct, LR::Absent, LR::Present });
+    runTest("CRANE", "CRANE", { LR::Correct, LR::Correct, LR::Correct, LR::Correct, LR::Correct });
+
+    std::cout << "\033[1;32mAll assertions passed successfully!\033[0m\n\n";
+}
+
 bool playGame(const std::vector<std::string>& words, const std::string& random_word) {
     std::vector<GuessRecord> game_history;
     std::string user_guess;
@@ -162,8 +183,12 @@ bool playGame(const std::vector<std::string>& words, const std::string& random_w
     {
         std::cout << "Guesses: " << guesses_count << "/" << MAX_GUESSES << "\n\n";
 
-        std::cout << "Enter in a 5 letter guess: ";
-        std::cin >> user_guess;
+        std::cout << "Enter in a " << LETTER_COUNT << " letter guess: ";
+
+        if (!(std::cin >> user_guess)) {
+            std::cerr << "Input failed!\n";
+            continue;
+        }
 
         if (user_guess.length() != LETTER_COUNT) {
             std::cout << "\n\033[31mGuess is not " << LETTER_COUNT << " letters long! Please try again\033[0m\n\n";
@@ -200,6 +225,10 @@ bool playGame(const std::vector<std::string>& words, const std::string& random_w
 
 int main()
 {   
+    std::cout << "Running tests...\n";
+    runAllTests();
+
+
     std::vector<std::string> words = loadWords(TEXT_FILE_NAME);
 
     if (words.size() <= 0) {
