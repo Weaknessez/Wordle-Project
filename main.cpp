@@ -6,8 +6,15 @@
 #include <algorithm>
 #include <cctype>
 
+// Constants
 const int MAX_GUESSES = 6;
 const std::string TEXT_FILE_NAME = "words_alpha.txt";
+
+// ANSI Color codes
+//const std::string RESET = "\e[0m";
+const std::string BLACK = "\033[40m";
+const std::string YELLOW = "\033[43m";
+const std::string GREEN = "\033[42m";
 
 bool icompare(const std::string& str1, const std::string& str2) {
     if (str1.length() != str2.length()) {
@@ -18,6 +25,10 @@ bool icompare(const std::string& str1, const std::string& str2) {
         return std::tolower(static_cast<unsigned char>(a)) == 
                std::tolower(static_cast<unsigned char>(b));
     });
+}
+
+std::string printColoredLetter(const char& letter, const std::string& ANSIColorCode) {
+    return ANSIColorCode + letter + "\e[0m";
 }
 
 std::vector<std::string> loadWords(std::string fileName) {
@@ -60,9 +71,10 @@ bool playGame(const std::vector<std::string>& words, const std::string& random_w
 
     while (guesses_count < MAX_GUESSES)
     {
+        std::cout << "\n\033[1mWordle\e[0m\n\nGuesses: " << guesses_count << "/" << MAX_GUESSES << std::endl << std::endl;
+
         std::cout << "Enter in a 5 letter guess: ";
         std::cin >> user_guess;
-
 
         if (user_guess.length() != 5) {
             std::cout << std::endl << "Guess not 5 letters long! Please try again" << std::endl;
@@ -77,6 +89,16 @@ bool playGame(const std::vector<std::string>& words, const std::string& random_w
         {
             std::cout << std::endl << "Guess is not in \"" << TEXT_FILE_NAME << "\". Please try again" << std::endl;
             continue;
+        }
+
+        for (size_t i = 0; i < random_word.length(); ++i)
+        {
+            char rChar = static_cast<char>(std::tolower(static_cast<unsigned char>(random_word[i])));
+            char uChar = static_cast<char>(std::tolower(static_cast<unsigned char>(user_guess[i])));
+
+            if (rChar == uChar) {
+                // TODO: I dont know lowkey, find a way to color them green or save this index at the random_word[i] to be green and output it before.
+            }
         }
 
         guesses_count++;
@@ -107,9 +129,9 @@ int main()
     bool game_won = playGame(words, random_word);
 
     if (game_won) {
-        std::cout << std::endl << "Game won!! You successfully guessed the word!" << std::endl;
+        std::cout << std::endl << "\033[1;32mGame won!! You successfully guessed the word!\033[0m" << std::endl;
     } else {
-        std::cout << std::endl << "Game lost, the word was: " << random_word << std::endl;
+        std::cout << std::endl << "\033[1;31mGame lost, the word was: \e[1;33m" << random_word << "\033[0m" << std::endl;
     }
 
     return 0;
