@@ -14,8 +14,10 @@
 #include "WordleUtils.h"
 
 // Constants
-//const size_t MAX_GUESSES = 6;
+/*
+const size_t MAX_GUESSES = 6;
 const size_t LETTER_COUNT = 5;
+*/
 const std::string TEXT_FILE_NAME = "words_alpha.txt";
 
 // ANSI Color codes
@@ -41,7 +43,7 @@ int main() {
     std::vector<std::string> words = loadWords(TEXT_FILE_NAME, letterCount);
 
     if (words.size() <= 0) {
-        std::cerr << "No \033[31m" << LETTER_COUNT << " letter words found in \033[33m\"" << TEXT_FILE_NAME << "\"\033[0m" << std::endl;
+        std::cerr << "No \033[31m" << letterCount << " letter words found in \033[33m\"" << TEXT_FILE_NAME << "\"\033[0m" << std::endl;
         return 1;
     }
     
