@@ -27,13 +27,13 @@ const std::string YELLOW = "\033[43m";
 const std::string GREEN = "\033[42m";
 
 // Function initialization
+GameResult playGame(WordleGame& wordle);
 std::string getRandomWord(const std::vector<std::string>& words);
 size_t getInputFromSizeType(const std::string& message, const size_t& minMargin, const size_t& maxMargin);
 std::vector<std::string> loadWords(const std::string& fileName, const size_t& letterCount = 5);
 void printColoredLetter(const char& letter, const std::string& ANSIColorCode);
 void printColoredWord(const std::vector<LetterResult>& letter_results, const std::string& user_guess, const std::size_t& newLineMargins = 2);
 void printAllGuessRecords(const std::vector<GuessRecord>& guess_history, const std::size_t& newLineMargins = 2);
-bool playGame(WordleGame& wordle);
 
 // Main
 int main() {  
@@ -50,20 +50,29 @@ int main() {
     std::string random_word = getRandomWord(words);
 
     WordleGame wordle_one(words, random_word, guessesAmount);
-    bool game_won = playGame(wordle_one);
+    GameResult gameResult = playGame(wordle_one);
     
-    if (game_won) {
-        std::cout << std::endl << "\033[1;32mGame won!! You successfully guessed the word!\033[0m" << std::endl;
-    } else {
-        std::cout << std::endl << "\033[1;31mGame lost, the word was: \e[1;33m" << random_word << "\033[0m" << std::endl;
+    switch (gameResult)
+    {
+        case GameResult::Won:
+            std::cout << std::endl << "\033[1;32mGame won!! You successfully guessed the word!\033[0m" << std::endl;
+            break;
+        
+        case GameResult::Lost:
+            std::cout << std::endl << "\033[1;31mGame lost, the word was: \033[1;33m" << random_word << "\033[0m" << std::endl;
+            break;
+
+        case GameResult::Quit:
+            std::cout << std::endl << "\033[1mGame was quit.\033[0m" << std::endl;
+            break;
     }
 
     return 0;
 }
 
 // Starts a loop to get each guess and use it in the WordleGame class
-bool playGame(WordleGame& wordle) {
-    std::cout << "\n\033[1mWordle by Yusuf; (Quit program: \".QUIT\")\e[0m\n\n";
+GameResult playGame(WordleGame& wordle) {
+    std::cout << "\n\033[1mWordle by Yusuf; (Quit program: \".quit\")\033[0m\n\n";
 
     while (!wordle.isGameOver())
     {
@@ -71,10 +80,14 @@ bool playGame(WordleGame& wordle) {
         std::cout << "Enter in a " << wordle.getLetterCount() << " letter guess: ";
 
         std::string guess;
-        std::cin >> guess;
 
-        if (guess == ".QUIT") {
-            return false;
+        if (!(std::cin >> guess)) {
+            std::cerr << "Failed to read input! Please try again.\n";
+            continue;
+        }
+
+        if (guess == ".quit") {
+            return GameResult::Quit;
         }
 
         GuessStatus submittedGuess = wordle.submitGuess(guess);
@@ -87,7 +100,7 @@ bool playGame(WordleGame& wordle) {
 
             case GuessStatus::Won:
                 printAllGuessRecords(wordle.getHistory());
-                return true;
+                return GameResult::Won;
 
             case GuessStatus::InvalidLength:
                 std::cout << "\n\n\033[31mboiii word isn't " << wordle.getLetterCount() << " letters long boi falsity.\033[0m\n\n";
@@ -98,17 +111,17 @@ bool playGame(WordleGame& wordle) {
                 break;
 
             case GuessStatus::GameOver:
-                return false;
+                return GameResult::Lost;
                 break;
         }
     }
 
-    return false;
+    return GameResult::Lost;
 }
 
 // Prints a colored letter to Terminal with an ANSIColorCode
 void printColoredLetter(const char& letter, const std::string& ANSIColorCode) {
-    std::cout << ANSIColorCode << static_cast<char>(std::toupper(letter)) << "\033[0m";
+    std::cout << ANSIColorCode << static_cast<unsigned char>(std::toupper(letter)) << "\033[0m";
 }
 
 // Prints a colored word to Terminal with multiple printColoredLetter() calls based on LetterResult colors

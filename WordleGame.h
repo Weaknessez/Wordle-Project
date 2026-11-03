@@ -1,8 +1,6 @@
 #ifndef WORDLEGAME_H
 #define WORDLEGAME_H
 
-#pragma once
-
 #include <string>
 #include <vector>
 #include <cstddef>

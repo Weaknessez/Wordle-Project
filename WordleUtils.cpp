@@ -2,12 +2,15 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cassert>
 #include <iterator>
 
 std::vector<LetterResult> evaluateGuess(
     const std::string& guess, 
     const std::string& answer
 ) {
+    assert(guess.length() == answer.length());
+
     std::string guess_lower = lowerString(guess);
     std::string answer_lower = lowerString(answer);
 

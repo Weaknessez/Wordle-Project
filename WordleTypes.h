@@ -14,6 +14,12 @@ struct GuessRecord {
     std::vector<LetterResult> results;
 };
 
+enum class GameResult {
+    Won,
+    Lost,
+    Quit
+};
+
 enum class GuessStatus {
     Accepted,
     Won,
