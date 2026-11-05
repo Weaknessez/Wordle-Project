@@ -1,3 +1,12 @@
+# Build directories
+/build/
+
+# Generated executables
 /wordle
+/wordle_terminal
+/wordle_gui
+*.exe
+
+# macOS debugging files
 *.dSYM/
 .DS_Store
