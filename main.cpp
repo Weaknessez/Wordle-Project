@@ -11,8 +11,9 @@
 #include "WordleGame.h"
 #include "WordleTypes.h"
 #include "WordleUtils.h"
+#include "WordlePaths.h"
 
-const std::string TEXT_FILE_NAME = "WordTextCollections/words_alpha.txt"; // Put your file path here
+std::string TEXT_FILE_NAME = "WordTextCollections/words_alpha.txt"; // Put your file path here
 
 // ANSI Color codes
 const std::string RESET = "\033[0m";
@@ -30,7 +31,10 @@ void printColoredWord(const std::vector<LetterResult>& letter_results, const std
 void printAllGuessRecords(const std::vector<GuessRecord>& guess_history, const std::size_t& newLineMargins = 2);
 
 // Main
-int main() {  
+int main(int argc, char* argv[]) { 
+    (void)argc;
+    TEXT_FILE_NAME = findWordleDictionary(argv[0]);
+    
     size_t letterCount = getInputFromSizeType("Enter letter count (3-7): ", 3, 7);
     size_t guessesAmount = getInputFromSizeType("Enter amount of guesses wanted (1-20): ", 1, 20);
 

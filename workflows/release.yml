@@ -1,0 +1,81 @@
+name: Build Wordle++ downloads
+
+on:
+  workflow_dispatch:      # Test build manually from the Actions tab
+  push:
+    tags:
+      - 'v*'              # Publish a release when you push v0.1.0, v0.2.0, ...
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-2022
+            target: windows-x64
+          - os: macos-15-intel
+            target: macos-intel
+          - os: macos-15
+            target: macos-apple-silicon
+          - os: ubuntu-24.04
+            target: linux-x64
+
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install raylib's Linux build requirements
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libasound2-dev libudev-dev libx11-dev \
+            libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libgl1-mesa-dev
+
+      - name: Configure CMake
+        shell: bash
+        run: |
+          if [[ "$RUNNER_OS" == "macOS" ]]; then
+            cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
+              -DCMAKE_OSX_DEPLOYMENT_TARGET=12.0 \
+              -DWORDLE_USE_SYSTEM_RAYLIB=OFF
+          else
+            cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
+              -DWORDLE_USE_SYSTEM_RAYLIB=OFF
+          fi
+
+      - name: Compile terminal and GUI
+        run: cmake --build build --config Release --parallel 4
+
+      - name: Assemble downloadable folder and ZIP
+        shell: bash
+        run: |
+          cmake --install build --config Release \
+            --prefix "$GITHUB_WORKSPACE/dist/Wordle-${{ matrix.target }}"
+          cd dist
+          cmake -E tar cf "Wordle-${{ matrix.target }}.zip" \
+            --format=zip "Wordle-${{ matrix.target }}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Wordle-${{ matrix.target }}
+          path: dist/*.zip
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: Wordle-*
+          path: release-assets
+          merge-multiple: true
+
+      - uses: softprops/action-gh-release@v3
+        with:
+          files: release-assets/*.zip
+          generate_release_notes: true

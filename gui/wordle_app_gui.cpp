@@ -1,6 +1,7 @@
 // Wordle++ — small raylib frontend using your existing WordleGame/WordleUtils.
 #include "raylib.h"
 #include "WordleGame.h"
+#include "WordlePaths.h"
 
 #include <algorithm>
 #include <array>
@@ -58,6 +59,7 @@ struct App {
     bool messageIsError = false;
     std::vector<std::string> dictionary;
     std::unique_ptr<WordleGame> game;
+    std::string dictionaryPath;
     std::string answer;
     std::string typing;
     std::string message;
@@ -73,7 +75,7 @@ void startGame(App& app) {
     app.message.clear();
     app.messageIsError = false;
 
-    std::ifstream file("WordTextCollections/words_alpha.txt");
+    std::ifstream file(app.dictionaryPath);
     std::string word;
     while (file >> word) {
         if (word.size() == static_cast<std::size_t>(app.letters)) {
@@ -278,7 +280,7 @@ void drawSettings(App& app, Font font) {
     if (button(font, {x + 16, y + 171, 200, 37}, "New Game", true)) startGame(app);
 }
 
-int main() {
+int main(int argc, char* argv[]) {
     SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_WINDOW_HIGHDPI);
     InitWindow(900, 820, "Wordle++");
     SetWindowMinSize(660, 700);
@@ -295,6 +297,10 @@ int main() {
     }
 
     App app;
+
+    (void)argc;
+    app.dictionaryPath = findWordleDictionary(argv[0]);
+    
     startGame(app);
     while (!WindowShouldClose()) {
         handleKeyboard(app);
