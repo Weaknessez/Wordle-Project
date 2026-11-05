@@ -286,21 +286,33 @@ int main(int argc, char* argv[]) {
     SetWindowMinSize(660, 700);
     SetTargetFPS(60);
 
+    
     Font font = GetFontDefault();
     bool loadedFont = false;
-    const char* fontPath = "/System/Library/Fonts/Supplemental/Arial.ttf";
+
+    #ifdef _WIN32
+        const char* fontPath = "C:/Windows/Fonts/segoeui.ttf";
+    #elif defined(__APPLE__)
+        const char* fontPath = "/System/Library/Fonts/Supplemental/Arial.ttf";
+    #else
+        const char* fontPath = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf";
+    #endif
+
     if (FileExists(fontPath)) {
-        font = LoadFontEx(fontPath, 36, nullptr, 0);
-        loadedFont = font.texture.id != 0;
-        if (loadedFont) SetTextureFilter(font.texture, TEXTURE_FILTER_BILINEAR);
-        else font = GetFontDefault();
+        Font customFont = LoadFontEx(fontPath, 48, nullptr, 0);
+
+        if (customFont.texture.id != 0) {
+            font = customFont;
+            loadedFont = true;
+            SetTextureFilter(font.texture, TEXTURE_FILTER_BILINEAR);
+        }
     }
 
     App app;
 
     (void)argc;
     app.dictionaryPath = findWordleDictionary(argv[0]);
-    
+
     startGame(app);
     while (!WindowShouldClose()) {
         handleKeyboard(app);
