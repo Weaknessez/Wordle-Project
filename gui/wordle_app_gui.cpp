@@ -269,7 +269,7 @@ void drawSettings(App& app, Font font) {
     drawText(font, "Letters", x + 16.0f, y + 59.0f, 17.0f, UI_GRAY);
     if (button(font, {x + 122, y + 52, 30, 31}, "-")) app.letters = std::max(3, app.letters - 1);
     drawText(font, std::to_string(app.letters), x + 170, y + 57, 19, UI_WHITE, true);
-    if (button(font, {x + 187, y + 52, 30, 31}, "+")) app.letters = std::min(7, app.letters + 1);
+    if (button(font, {x + 187, y + 52, 30, 31}, "+")) app.letters = std::min(10, app.letters + 1);
 
     drawText(font, "Guesses", x + 16, y + 106, 17, UI_GRAY);
     if (button(font, {x + 122, y + 99, 30, 31}, "-")) app.attempts = std::max(1, app.attempts - 1);

@@ -35,7 +35,7 @@ int main(int argc, char* argv[]) {
     (void)argc;
     TEXT_FILE_NAME = findWordleDictionary(argv[0]);
     
-    size_t letterCount = getInputFromSizeType("Enter letter count (3-7): ", 3, 7);
+    size_t letterCount = getInputFromSizeType("Enter letter count (3-10): ", 3, 10);
     size_t guessesAmount = getInputFromSizeType("Enter amount of guesses wanted (1-20): ", 1, 20);
 
     std::vector<std::string> words = loadWords(TEXT_FILE_NAME, letterCount);
